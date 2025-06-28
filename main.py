@@ -2,8 +2,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 import ssl
-from imap_tools import MailBox, AND
-from bs4 import BeautifulSoup
+from imap_tools import MailBox
 from playwright.async_api import async_playwright
 
 load_dotenv("config.env")
@@ -34,7 +33,7 @@ def get_confirmation_link():
                 return url
     return None
 
-async def click_confirmation_link2(url):
+async def click_confirmation_link(url):
     print(f"🌍 Opening link: {url}")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -45,20 +44,10 @@ async def click_confirmation_link2(url):
         await browser.close()
         print("✅ Button clicked: Aktualisierung bestätigen")
 
-async def click_confirmation_link(url):
-    print(f"🌍 Besuche Link: {url}")
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        await page.goto(url)
-        await page.wait_for_timeout(3000)  # Optional: kurze Pause
-        await browser.close()
-        print("✅ Bestätigt.")
-
 async def main():
     link = get_confirmation_link()
     if link:
-        await click_confirmation_link2(link)
+        await click_confirmation_link(link)
     else:
         print("❌ Kein passender Link gefunden.")
 
