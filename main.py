@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import ssl
 from imap_tools import MailBox
 from playwright.async_api import async_playwright
+import time
 
 load_dotenv("config.env")
 
@@ -12,6 +13,7 @@ EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 IMAP_PORT = int(os.getenv("IMAP_PORT", "993"))
+CHECK_INTERVAL = 10  # seconds
 
 SSL_CONTEXT = ssl.create_default_context()
 
@@ -33,7 +35,7 @@ async def click_confirmation_link(url):
             return False
         return True
 
-async def main():
+async def check_emails():
     print(f"📡 Connecting to {IMAP_SERVER}:{IMAP_PORT} as {EMAIL}")
     with MailBox(IMAP_SERVER, port=IMAP_PORT, ssl_context=SSL_CONTEXT).login(EMAIL, PASSWORD) as mailbox:
         print(f"I'm in the mailbox")
@@ -45,7 +47,7 @@ async def main():
                 url = html[start:end]
                 print(f"✅ Found Netflix link!")
 
-                confirmation_successful = click_confirmation_link(url)
+                confirmation_successful = await click_confirmation_link(url)
                 
                 if confirmation_successful:
                     mailbox.move(msg.uid, GELESEN_FOLDER)
@@ -55,5 +57,15 @@ async def main():
             elif msg.from_ and "netflix" in msg.from_.lower():
                  mailbox.move(msg.uid, GELESEN_FOLDER)
                  print(f"📦 Email with subject {msg.subject} moved to Gelesen folder")
+
+async def main():
+    print(f"🔄 Starting Netflix Autovalidator - checking every {CHECK_INTERVAL} seconds")
+    while True:
+        try:
+            await check_emails()
+        except Exception as e:
+            print(f"❌ Error occurred: {e}")
+        print(f"💤 Waiting {CHECK_INTERVAL} seconds before next check...")
+        await asyncio.sleep(CHECK_INTERVAL)
 
 asyncio.run(main())
