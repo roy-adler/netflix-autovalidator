@@ -35,10 +35,10 @@ async def click_confirmation_link(url):
             return False
         return True
 
-async def check_emails():
-    print(f"📡 Connecting to {IMAP_SERVER}:{IMAP_PORT} as {EMAIL}")
-    with MailBox(IMAP_SERVER, port=IMAP_PORT, ssl_context=SSL_CONTEXT).login(EMAIL, PASSWORD) as mailbox:
-        print(f"I'm in the mailbox")
+async def check_emails(mailbox):
+    """Check emails using existing mailbox connection"""
+    try:
+        print(f"📧 Checking for new emails...")
         for msg in mailbox.fetch(reverse=True):
             html = msg.html or msg.text
             if "update-primary-location" in html:
@@ -57,15 +57,35 @@ async def check_emails():
             elif msg.from_ and "netflix" in msg.from_.lower():
                  mailbox.move(msg.uid, GELESEN_FOLDER)
                  print(f"📦 Email with subject {msg.subject} moved to Gelesen folder")
+    except Exception as e:
+        print(f"❌ Error checking emails: {e}")
+        # Re-raise to trigger reconnection
+        raise
 
 async def main():
     print(f"🔄 Starting Netflix Autovalidator - checking every {CHECK_INTERVAL} seconds")
+    print(f"📡 Connecting to {IMAP_SERVER}:{IMAP_PORT} as {EMAIL}")
+    
     while True:
         try:
-            await check_emails()
+            # Establish connection once
+            with MailBox(IMAP_SERVER, port=IMAP_PORT, ssl_context=SSL_CONTEXT).login(EMAIL, PASSWORD) as mailbox:
+                print(f"✅ Connected to mailbox successfully")
+                
+                # Keep connection alive and check emails periodically
+                while True:
+                    try:
+                        await check_emails(mailbox)
+                        print(f"💤 Waiting {CHECK_INTERVAL} seconds before next check...")
+                        await asyncio.sleep(CHECK_INTERVAL)
+                    except Exception as e:
+                        print(f"❌ Connection error: {e}")
+                        print("🔄 Reconnecting...")
+                        break  # Break inner loop to reconnect
+                        
         except Exception as e:
-            print(f"❌ Error occurred: {e}")
-        print(f"💤 Waiting {CHECK_INTERVAL} seconds before next check...")
-        await asyncio.sleep(CHECK_INTERVAL)
+            print(f"❌ Failed to connect: {e}")
+            print(f"🔄 Retrying in {CHECK_INTERVAL} seconds...")
+            await asyncio.sleep(CHECK_INTERVAL)
 
 asyncio.run(main())
