@@ -6,7 +6,7 @@ from imap_tools import MailBox
 from playwright.async_api import async_playwright
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 load_dotenv("config.env")
 
@@ -79,7 +79,7 @@ async def check_emails(mailbox):
     """Check emails using existing mailbox connection"""
     try:
         logger.info(f"📧 Checking for new emails...")
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
         
         for msg in mailbox.fetch(reverse=True):
             html = msg.html or msg.text
