@@ -78,7 +78,7 @@ async def click_confirmation_link(url):
 async def check_emails(mailbox):
     """Check emails using existing mailbox connection"""
     try:
-        logger.info(f"📧 Checking for new emails...")
+        print(f"📧 Checking for new emails...")
         current_time = datetime.now(timezone.utc)
         
         for msg in mailbox.fetch(reverse=True):
