@@ -15,7 +15,7 @@ EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 IMAP_PORT = int(os.getenv("IMAP_PORT", "993"))
-CHECK_INTERVAL = 10  # seconds
+CHECK_INTERVAL = 1  # seconds
 MINUTES_TO_WAIT = 900 # 900 seconds = 15 minutes
 LOG_PATH = os.getenv("LOG_PATH", "netflix-validator.log")
 
